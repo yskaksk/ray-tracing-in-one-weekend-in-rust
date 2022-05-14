@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use std::fmt;
-use std::ops::{Add, Mul, Sub, Neg};
+use std::ops::{Add, Mul, Neg, Sub};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Vec3 {
@@ -12,16 +12,14 @@ pub struct Vec3 {
 
 impl Vec3 {
     pub fn new(x: f64, y: f64, z: f64) -> Self {
-        Vec3 {
-            x, y, z
-        }
+        Vec3 { x, y, z }
     }
 
     pub fn mul(self, t: f64) -> Self {
         Vec3 {
             x: self.x * t,
             y: self.y * t,
-            z: self.z * t
+            z: self.z * t,
         }
     }
 
@@ -32,7 +30,7 @@ impl Vec3 {
             Some(Vec3 {
                 x: self.x / t,
                 y: self.y / t,
-                z: self.z / t
+                z: self.z / t,
             })
         }
     }
@@ -53,7 +51,7 @@ impl Vec3 {
         Vec3 {
             x: self.y * other.z - self.z * other.y,
             y: self.z * other.x - self.x * other.z,
-            z: self.x * other.y - self.y * other.x
+            z: self.x * other.y - self.y * other.x,
         }
     }
 
@@ -76,7 +74,7 @@ impl Add for Vec3 {
         Self {
             x: self.x + other.x,
             y: self.y + other.y,
-            z: self.z + other.z
+            z: self.z + other.z,
         }
     }
 }
@@ -87,7 +85,7 @@ impl Sub for Vec3 {
         Self {
             x: self.x - other.x,
             y: self.y - other.y,
-            z: self.z - other.z
+            z: self.z - other.z,
         }
     }
 }
@@ -98,7 +96,7 @@ impl Mul for Vec3 {
         Self {
             x: self.x * other.x,
             y: self.y * other.y,
-            z: self.z * other.z
+            z: self.z * other.z,
         }
     }
 }
@@ -133,7 +131,7 @@ mod tests {
         let expected = Vec3 {
             x: 1.0,
             y: 2.0,
-            z: 3.0
+            z: 3.0,
         };
         assert_eq!(Vec3::new(1.0, 2.0, 3.0), expected);
     }
@@ -152,27 +150,37 @@ mod tests {
 
     #[test]
     fn vec3_length_squared() {
-        let expected = 1.0*1.0 + 2.0*2.0 + 3.0*3.0;
+        let expected = 1.0 * 1.0 + 2.0 * 2.0 + 3.0 * 3.0;
         assert_eq!(Vec3::new(1.0, 2.0, 3.0).length_squared(), expected);
     }
 
     #[test]
     fn vec3_length() {
-        let expected = (1.0*1.0 + 2.0*2.0 + 3.0*3.0 as f64).sqrt();
+        let expected = (1.0 * 1.0 + 2.0 * 2.0 + 3.0 * 3.0 as f64).sqrt();
         assert_eq!(Vec3::new(1.0, 2.0, 3.0).length(), expected);
     }
 
     #[test]
     fn vec3_dot() {
-        let expected = 1.0*10.0 + 2.0*20.0 + 3.0*30.0;
-        assert_eq!(Vec3::new(1.0, 2.0, 3.0).dot(Vec3::new(10.0, 20.0, 30.0)), expected);
+        let expected = 1.0 * 10.0 + 2.0 * 20.0 + 3.0 * 30.0;
+        assert_eq!(
+            Vec3::new(1.0, 2.0, 3.0).dot(Vec3::new(10.0, 20.0, 30.0)),
+            expected
+        );
     }
 
     #[test]
     fn vec3_cross() {
         // [1.0, 2.0, 3.0] x [5.0, 1.0, 4.0]
-        let expected = Vec3::new(2.0*4.0-3.0*1.0, 3.0*5.0-1.0*4.0, 1.0*1.0-2.0*5.0);
-        assert_eq!(Vec3::new(1.0, 2.0, 3.0).cross(Vec3::new(5.0, 1.0, 4.0)), expected);
+        let expected = Vec3::new(
+            2.0 * 4.0 - 3.0 * 1.0,
+            3.0 * 5.0 - 1.0 * 4.0,
+            1.0 * 1.0 - 2.0 * 5.0,
+        );
+        assert_eq!(
+            Vec3::new(1.0, 2.0, 3.0).cross(Vec3::new(5.0, 1.0, 4.0)),
+            expected
+        );
     }
 
     #[test]
@@ -198,19 +206,28 @@ mod tests {
     #[test]
     fn vec3_add() {
         let expected = Vec3::new(11.0, 22.0, 33.0);
-        assert_eq!(Vec3::new(1.0, 2.0, 3.0) + Vec3::new(10.0, 20.0, 30.0), expected);
+        assert_eq!(
+            Vec3::new(1.0, 2.0, 3.0) + Vec3::new(10.0, 20.0, 30.0),
+            expected
+        );
     }
 
     #[test]
     fn vec3_sub() {
         let expected = Vec3::new(9.0, 18.0, 27.0);
-        assert_eq!(Vec3::new(10.0, 20.0, 30.0) - Vec3::new(1.0, 2.0, 3.0), expected);
+        assert_eq!(
+            Vec3::new(10.0, 20.0, 30.0) - Vec3::new(1.0, 2.0, 3.0),
+            expected
+        );
     }
 
     #[test]
     fn vec3_multiply() {
         let expected = Vec3::new(10.0, 40.0, 90.0);
-        assert_eq!(Vec3::new(1.0, 2.0, 3.0) * Vec3::new(10.0, 20.0, 30.0), expected);
+        assert_eq!(
+            Vec3::new(1.0, 2.0, 3.0) * Vec3::new(10.0, 20.0, 30.0),
+            expected
+        );
     }
 
     #[test]

@@ -2,7 +2,7 @@
 
 mod vec3;
 
-use vec3::{Vec3, Point3, Color};
+use vec3::{Color, Point3, Vec3};
 
 fn write_color(color: &Color) {
     let r = (255.999 * color.x).floor() as u8;
@@ -13,7 +13,7 @@ fn write_color(color: &Color) {
 
 struct Ray {
     origin: Vec3,
-    direction: Vec3
+    direction: Vec3,
 }
 
 impl Ray {
@@ -24,7 +24,7 @@ impl Ray {
 
 fn ray_color(ray: Ray) -> Color {
     if hit_sphere(&Point3::new(0.0, 0.0, -1.0), 0.5, &ray) {
-        return Color::new(1.0, 0.0, 0.0)
+        return Color::new(1.0, 0.0, 0.0);
     }
     let unit_direction = ray.direction.unit_vector();
     let t = 0.5 * (unit_direction.y + 1.0);
@@ -36,7 +36,7 @@ fn hit_sphere(center: &Point3, radius: f64, r: &Ray) -> bool {
     let a = r.direction.dot(r.direction);
     let b = 2.0 * oc.dot(r.direction);
     let c = oc.dot(oc) - radius * radius;
-    let discriminant = b*b - 4.0*a*c;
+    let discriminant = b * b - 4.0 * a * c;
     discriminant > 0.0
 }
 
@@ -53,8 +53,10 @@ fn main() {
     let origin = Point3::zero();
     let horizontal = Vec3::new(viewport_width, 0.0, 0.0);
     let vertical = Vec3::new(0.0, viewport_height, 0.0);
-    let lower_left_corner = origin - horizontal.div(2.0).unwrap() - vertical.div(2.0).unwrap() - Vec3::new(0.0, 0.0, focal_length);
-
+    let lower_left_corner = origin
+        - horizontal.div(2.0).unwrap()
+        - vertical.div(2.0).unwrap()
+        - Vec3::new(0.0, 0.0, focal_length);
 
     println!("P3");
     println!("{} {}", image_width, image_height);
@@ -66,7 +68,7 @@ fn main() {
             let v = j as f64 / (image_height as f64 - 1.0);
             let r = Ray {
                 origin,
-                direction: lower_left_corner + horizontal.mul(u) + vertical.mul(v) - origin
+                direction: lower_left_corner + horizontal.mul(u) + vertical.mul(v) - origin,
             };
             let color = ray_color(r);
             write_color(&color);
