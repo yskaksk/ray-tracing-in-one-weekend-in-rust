@@ -1,7 +1,11 @@
 #![allow(dead_code)]
 
+mod hittable;
+mod ray;
 mod vec3;
 
+use hittable::{Hittable, HittableList, Sphere};
+use ray::Ray;
 use vec3::{Color, Point3, Vec3};
 
 fn write_color(color: &Color) {
@@ -11,40 +15,37 @@ fn write_color(color: &Color) {
     println!("{} {} {}", r, g, b);
 }
 
-struct Ray {
-    origin: Vec3,
-    direction: Vec3,
-}
-
-impl Ray {
-    fn at(self, t: f64) -> Point3 {
-        self.origin + self.direction.mul(t)
+fn ray_color<T: Hittable>(ray: Ray, world: &T) -> Color {
+    if let Some(rec) = world.hit(&ray, 0.0, f64::MAX) {
+        return (Color::one() + rec.normal).mul(0.5);
+    } else {
+        let unit_direction = ray.direction.unit_vector();
+        let t = 0.5 * (unit_direction.y + 1.0);
+        return Color::one().mul(1.0 - t) + Color::new(0.5, 0.7, 1.0).mul(t);
     }
 }
 
-fn ray_color(ray: Ray) -> Color {
-    if hit_sphere(&Point3::new(0.0, 0.0, -1.0), 0.5, &ray) {
-        return Color::new(1.0, 0.0, 0.0);
-    }
-    let unit_direction = ray.direction.unit_vector();
-    let t = 0.5 * (unit_direction.y + 1.0);
-    Color::one().mul(1.0 - t) + Color::new(0.5, 0.7, 1.0).mul(t)
-}
-
-fn hit_sphere(center: &Point3, radius: f64, r: &Ray) -> bool {
+fn hit_sphere(center: &Point3, radius: f64, r: &Ray) -> Option<f64> {
     let oc = r.origin - center.clone();
-    let a = r.direction.dot(r.direction);
-    let b = 2.0 * oc.dot(r.direction);
-    let c = oc.dot(oc) - radius * radius;
-    let discriminant = b * b - 4.0 * a * c;
-    discriminant > 0.0
+    let a = r.direction.length_squared();
+    let half_b = oc.dot(r.direction);
+    let c = oc.length_squared() - radius * radius;
+    let discriminant = half_b * half_b - a * c;
+    if discriminant > 0.0 {
+        Some((-half_b - discriminant.sqrt()) / a)
+    } else {
+        None
+    }
 }
 
 fn main() {
     let aspect_ratio: f64 = 16.0 / 9.0;
-
     let image_width = 400;
     let image_height = (image_width as f64 / aspect_ratio).floor() as usize;
+
+    let mut world = HittableList::new();
+    world.add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
+    world.add(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
 
     let viewport_height: f64 = 2.0;
     let viewport_width = aspect_ratio * viewport_height;
@@ -70,7 +71,7 @@ fn main() {
                 origin,
                 direction: lower_left_corner + horizontal.mul(u) + vertical.mul(v) - origin,
             };
-            let color = ray_color(r);
+            let color = ray_color(r, &world);
             write_color(&color);
         }
     }
