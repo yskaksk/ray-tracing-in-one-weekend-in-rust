@@ -1,17 +1,32 @@
 #![allow(dead_code)]
 
+mod camera;
 mod hittable;
 mod ray;
 mod vec3;
 
+use camera::Camera;
 use hittable::{Hittable, HittableList, Sphere};
 use ray::Ray;
-use vec3::{Color, Point3, Vec3};
+use vec3::{Color, Point3};
 
-fn write_color(color: &Color) {
-    let r = (255.999 * color.x).floor() as u8;
-    let g = (255.999 * color.y).floor() as u8;
-    let b = (255.999 * color.z).floor() as u8;
+use rand::Rng;
+
+fn clamp(x: f64, min: f64, max: f64) -> f64 {
+    if x < min {
+        return min;
+    }
+    if x > max {
+        return max;
+    }
+    return x;
+}
+
+fn write_color(color: &Color, samples_per_pixel: u8) {
+    let scale = 1.0 / samples_per_pixel as f64;
+    let r = (clamp(color.x * scale, 0.0, 0.999) * 256.0).floor() as u8;
+    let g = (clamp(color.y * scale, 0.0, 0.999) * 256.0).floor() as u8;
+    let b = (clamp(color.z * scale, 0.0, 0.999) * 256.0).floor() as u8;
     println!("{} {} {}", r, g, b);
 }
 
@@ -25,54 +40,34 @@ fn ray_color<T: Hittable>(ray: Ray, world: &T) -> Color {
     }
 }
 
-fn hit_sphere(center: &Point3, radius: f64, r: &Ray) -> Option<f64> {
-    let oc = r.origin - center.clone();
-    let a = r.direction.length_squared();
-    let half_b = oc.dot(r.direction);
-    let c = oc.length_squared() - radius * radius;
-    let discriminant = half_b * half_b - a * c;
-    if discriminant > 0.0 {
-        Some((-half_b - discriminant.sqrt()) / a)
-    } else {
-        None
-    }
-}
-
 fn main() {
     let aspect_ratio: f64 = 16.0 / 9.0;
-    let image_width = 400;
+    let image_width = 800;
     let image_height = (image_width as f64 / aspect_ratio).floor() as usize;
+    let samples_per_pixel = 100 as u8;
 
     let mut world = HittableList::new();
     world.add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
     world.add(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
 
-    let viewport_height: f64 = 2.0;
-    let viewport_width = aspect_ratio * viewport_height;
-    let focal_length = 1.0;
-
-    let origin = Point3::zero();
-    let horizontal = Vec3::new(viewport_width, 0.0, 0.0);
-    let vertical = Vec3::new(0.0, viewport_height, 0.0);
-    let lower_left_corner = origin
-        - horizontal.div(2.0).unwrap()
-        - vertical.div(2.0).unwrap()
-        - Vec3::new(0.0, 0.0, focal_length);
+    let camera = Camera::new();
 
     println!("P3");
     println!("{} {}", image_width, image_height);
     println!("255");
 
+    let mut rng = rand::thread_rng();
+
     for j in (0..image_height).rev() {
         for i in 0..image_width {
-            let u = i as f64 / (image_width as f64 - 1.0);
-            let v = j as f64 / (image_height as f64 - 1.0);
-            let r = Ray {
-                origin,
-                direction: lower_left_corner + horizontal.mul(u) + vertical.mul(v) - origin,
-            };
-            let color = ray_color(r, &world);
-            write_color(&color);
+            let mut color = Color::new(0.0, 0.0, 0.0);
+            for _ in 0..samples_per_pixel {
+                let u = (i as f64 + rng.gen::<f64>()) / (image_width as f64 - 1.0);
+                let v = (j as f64 + rng.gen::<f64>()) / (image_height as f64 - 1.0);
+                let r = camera.get_ray(u, v);
+                color = color + ray_color(r, &world);
+            }
+            write_color(&color, samples_per_pixel);
         }
     }
 }
