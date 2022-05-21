@@ -1,7 +1,11 @@
 #![allow(dead_code)]
 
+use std::f64;
 use std::fmt;
 use std::ops::{Add, Mul, Neg, Sub};
+
+use rand::random;
+use rand::{rngs::ThreadRng, Rng};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Vec3 {
@@ -65,6 +69,26 @@ impl Vec3 {
 
     pub fn one() -> Self {
         Vec3::new(1.0, 1.0, 1.0)
+    }
+
+    pub fn random(rng: &mut ThreadRng) -> Self {
+        Vec3::new(rng.gen(), rng.gen(), rng.gen())
+    }
+
+    pub fn random_in_unit_sphere(rng: &mut ThreadRng) -> Self {
+        let u = rng.gen::<f64>();
+        let v = rng.gen::<f64>();
+        let o = rng.gen::<f64>();
+        let o_c = o.powf(1.0 / 3.0);
+        let z = o_c * (-2.0 * u + 1.0);
+        let x = o_c * (1.0 - z * z).sqrt() * (2.0 * f64::consts::PI * v).cos();
+        let y = o_c * (1.0 - z * z).sqrt() * (2.0 * f64::consts::PI * v).sin();
+
+        Vec3::new(x, y, z)
+    }
+
+    pub fn random_unit_vector(rng: &mut ThreadRng) -> Self {
+        Self::random_in_unit_sphere(rng).unit_vector()
     }
 }
 
