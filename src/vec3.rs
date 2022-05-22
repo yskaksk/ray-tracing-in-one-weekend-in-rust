@@ -4,7 +4,6 @@ use std::f64;
 use std::fmt;
 use std::ops::{Add, Mul, Neg, Sub};
 
-use rand::random;
 use rand::{rngs::ThreadRng, Rng};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -47,7 +46,7 @@ impl Vec3 {
         self.length_squared().sqrt()
     }
 
-    pub fn dot(self, other: Vec3) -> f64 {
+    pub fn dot(self, other: &Vec3) -> f64 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
 
@@ -89,6 +88,15 @@ impl Vec3 {
 
     pub fn random_unit_vector(rng: &mut ThreadRng) -> Self {
         Self::random_in_unit_sphere(rng).unit_vector()
+    }
+
+    pub fn near_zero(&self) -> bool {
+        let s = 1e-8;
+        return (self.x.abs() < s) && (self.y.abs() < s) && (self.z.abs() < s);
+    }
+
+    pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
+        *v - n.mul(v.dot(n)).mul(2.0)
     }
 }
 
@@ -188,7 +196,7 @@ mod tests {
     fn vec3_dot() {
         let expected = 1.0 * 10.0 + 2.0 * 20.0 + 3.0 * 30.0;
         assert_eq!(
-            Vec3::new(1.0, 2.0, 3.0).dot(Vec3::new(10.0, 20.0, 30.0)),
+            Vec3::new(1.0, 2.0, 3.0).dot(&Vec3::new(10.0, 20.0, 30.0)),
             expected
         );
     }
