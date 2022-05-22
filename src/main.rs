@@ -2,13 +2,15 @@
 
 mod camera;
 mod hittable;
+mod material;
 mod ray;
 mod vec3;
 
 use camera::Camera;
 use hittable::{Hittable, HittableList, Sphere};
+use material::Material::*;
 use ray::Ray;
-use vec3::{Color, Point3};
+use vec3::{Color, Point3, Vec3};
 
 use image::RgbImage;
 use rand::{rngs::ThreadRng, Rng};
@@ -36,9 +38,15 @@ fn ray_color<T: Hittable>(ray: Ray, world: &T, rng: &mut ThreadRng, depth: u8) -
         return Color::new(0.0, 0.0, 0.0);
     }
     if let Some(rec) = world.hit(&ray, 0.0, f64::MAX) {
-        let u = Point3::random_in_unit_sphere(rng);
-        let target = rec.p + rec.normal + u;
-        return ray_color(Ray::new(rec.p, target - rec.p), world, rng, depth - 1).mul(0.5);
+        let mut scattered = Ray::new(Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 0.0));
+        let mut attenuation = Color::new(0.0, 0.0, 0.0);
+        if rec
+            .material
+            .scatter(&ray, &rec, &mut attenuation, &mut scattered, rng)
+        {
+            return attenuation * ray_color(scattered, world, rng, depth - 1);
+        }
+        return Color::new(0.0, 0.0, 0.0);
     } else {
         let unit_direction = ray.direction.unit_vector();
         let t = 0.5 * (unit_direction.y + 1.0);
@@ -50,12 +58,42 @@ fn main() {
     let aspect_ratio: f64 = 16.0 / 9.0;
     let image_width = 800;
     let image_height = (image_width as f64 / aspect_ratio).floor() as u32;
-    let samples_per_pixel = 5 as u8;
-    let max_depth = 10;
+    let samples_per_pixel = 100 as u8;
+    let max_depth = 50;
 
     let mut world = HittableList::new();
-    world.add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
-    world.add(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
+    let material_ground = Lambertian {
+        albedo: Color::new(0.8, 0.8, 0.0),
+    };
+    let material_center = Lambertian {
+        albedo: Color::new(0.7, 0.3, 0.3),
+    };
+    let material_left = Metal {
+        albedo: Color::new(0.8, 0.8, 0.8),
+    };
+    let material_right = Metal {
+        albedo: Color::new(0.8, 0.6, 0.2),
+    };
+    world.add(Box::new(Sphere::new(
+        Point3::new(0.0, -100.5, -1.0),
+        100.0,
+        material_ground,
+    )));
+    world.add(Box::new(Sphere::new(
+        Point3::new(0.0, 0.0, -1.0),
+        0.5,
+        material_center,
+    )));
+    world.add(Box::new(Sphere::new(
+        Point3::new(-1.0, 0.0, -1.0),
+        0.5,
+        material_left,
+    )));
+    world.add(Box::new(Sphere::new(
+        Point3::new(1.0, 0.0, -1.0),
+        0.5,
+        material_right,
+    )));
 
     let camera = Camera::new();
 
